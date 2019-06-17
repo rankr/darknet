@@ -55,6 +55,9 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     //args.type = INSTANCE_DATA;
     args.threads = 64;
 
+    //李鹏程
+    lpc_loss = open('lpc_loss', O_WRONLY|O_CREAT);
+
     pthread_t load_thread = load_data(args);
     double time;
     int count = 0;
@@ -127,6 +130,10 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 
         i = get_current_batch(net);
         printf("%ld: %f, %f avg, %f rate, %lf seconds, %d images\n", get_current_batch(net), loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, i*imgs);
+        
+        //李鹏程
+        fprintf(lpc_loss, "%d\t%d\n", loss, avg_loss)
+
         if(i%100==0){
 #ifdef GPU
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
@@ -135,7 +142,8 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             sprintf(buff, "%s/%s.backup", backup_directory, base);
             save_weights(net, buff);
         }
-        if(i%10000==0 || (i < 1000 && i%100 == 0)){
+        //if(i%10000==0 || (i < 1000 && i%100 == 0)){ //李鹏程 annotated
+        if(i%1000 == 0){
 #ifdef GPU
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
@@ -151,6 +159,9 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     char buff[256];
     sprintf(buff, "%s/%s_final.weights", backup_directory, base);
     save_weights(net, buff);
+
+    //李鹏程
+    close(lpc_loss);
 }
 
 
